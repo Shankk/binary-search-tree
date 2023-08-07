@@ -1,10 +1,67 @@
 class Tree {
-    constructor(array = []) {
-        this.array = array
-        this.tree = null
+    constructor(arr = []) {
+        this.array = [...new Set(arr.sort((a, b) => a - b))];
+        this.tree = this.buildTree(this.array)
     }
 
-    buildTree(array = [], start, end) {
+    rebalance() {
+        this.array = this.inorder(this.tree)
+        return this.tree = this.buildTree(this.array, 0, this.array.length-1)
+    }
+
+    isBalanced(node) {
+        if(node == null) return -1
+        
+        let lh = this.height(node.leftChild)
+        let rh = this.height(node.rightChild)
+        
+        console.log("LH: "+lh + " RH: " +rh)
+        let result = lh - rh
+        if(result > 1 || result < -1) {
+            console.log("Not Balanced")
+        }
+        else {
+            console.log("Is Balanced")
+        }
+    }
+
+    height(node) {
+        if(node == null) return -1
+
+        let lh = this.height(node.leftChild)
+        let rh = this.height(node.rightChild)
+        return lh > rh ? lh + 1 : rh + 1        
+    }
+
+    inorder(node, array = []) {
+        if (node !== null) {
+            this.inorder(node.leftChild, array);
+            array.push(node.root);
+            this.inorder(node.rightChild, array);
+        }
+
+        return array
+    }
+    preorder(node, array = []) {
+        if (node !== null) {
+            array.push(node.root);
+            this.inorder(node.leftChild, array);
+            this.inorder(node.rightChild, array);
+        }
+        
+        return array
+    }
+    postorder(node, array = []) {
+        if (node !== null) {
+            this.inorder(node.leftChild, array);
+            this.inorder(node.rightChild, array);
+            array.push(node.root);
+        }
+        
+        return array
+    }
+
+    buildTree(array = [], start = 0, end = array.length - 1) {
         if(start>end) return null
         let mid = Math.floor((start+end)/2)
         let root = new Node(array[mid]) 
@@ -63,24 +120,41 @@ class Tree {
 
     remove(value) {
         let item = this.find(value)
-        if(item == null) return null
-        // FIX THIS: has both children, we search for next best to take over
-        if(item.rightChild != null && item.leftChild != null){
-            
+        if(item == null) return item
+        // if no children, we delete it
+        if(item.rightChild == null && item.leftChild == null){
+            return item = null;
         }
         // only has rightchild, we replace it with rightchild
-        else if(item.rightChild != null && item.leftChild == null) {
+        else if(item.leftChild == null) {
             item.root = item.rightChild.root
             item.rightChild = null
         }
         // only has leftchild, we replace it with left child
-        else if(item.rightChild == null && item.leftChild != null) { 
+        else if(item.rightChild == null) { 
             item.root = item.leftChild.root
             item.leftChild = null
         }
-        // if no children, we delete it
+        //has both children, we search for next best to take over
         else { 
-            return item = null
+            let succParent = item
+            // Find successor
+            let succ = item.rightChild;
+            while (succ.leftChild !== null) {
+                succParent = succ;
+                succ = succ.leftChild;
+            }
+            // Delete successor.  Since successor is always left child of its parent
+            // we can safely make successor's right child as left of its parent.
+            // If there is no succ, then assign succ.right to succParent.right
+            if (succParent !== item) {
+                succParent.leftChild = succ.rightChild;
+            } else {
+                succParent.rightChild = succ.rightChild;
+            }
+            // Copy Successor Data to root
+            item.root = succ.root;
+            return item;
         }
     }
 } 
